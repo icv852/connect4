@@ -148,61 +148,122 @@ export function bestMove(game) {
   return bestMove;
 }
 
-// export function bestMove(game) {
-//   const possibleMoves = availableMoves(game)
-//     .map((move) => applyMove(game, move))
-//     .map((game) => minimax(game, 0, 3));
+// function calculateScoresOfBox() {
+//   let scores = [
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0],
+//   ];
 
-//   const bestMoves = availableMoves(game).filter((_, i) => {
-//     return possibleMoves[i] === -1;
-//   });
-
-//   const middleMoves = availableMoves(game).filter((_, i) => {
-//     return possibleMoves[i] === 0;
-//   });
-
-//   const badMoves = availableMoves(game).filter((_, i) => {
-//     return possibleMoves[i] === 1;
-//   });
-
-//   if (bestMoves.length > 0) {
-//     return bestMoves;
-//   } else if (middleMoves.length > 0) {
-//     return middleMoves;
-//   } else {
-//     return badMoves;
+//   function addVerticalScores() {
+//     for (let i = 0; i < scores.length; i++) {
+//       for (let j = 0; j < 3; j++) {
+//         scores[i][j]++;
+//         scores[i][j + 1]++;
+//         scores[i][j + 2]++;
+//         scores[i][j + 3]++;
+//       }
+//     }
 //   }
+
+//   function addHorizontalScores() {
+//     for (let i = 0; i < 4; i++) {
+//       for (let j = 0; j < 6; j++) {
+//         scores[i][j]++;
+//         scores[i + 1][j]++;
+//         scores[i + 2][j]++;
+//         scores[i + 3][j]++;
+//       }
+//     }
+//   }
+
+//   function addDiagonalScores() {
+//     for (let i = 0; i < 4; i++) {
+//       for (let j = 0; j < 3; j++) {
+//         scores[i][j]++;
+//         scores[i + 1][j + 1]++;
+//         scores[i + 2][j + 2]++;
+//         scores[i + 3][j + 3]++;
+//       }
+//     }
+//   }
+
+//   function addAntiDiagonalScores() {
+//     for (let i = 3; i < 7; i++) {
+//       for (let j = 0; j < 3; j++) {
+//         scores[i][j]++;
+//         scores[i - 1][j + 1]++;
+//         scores[i - 2][j + 2]++;
+//         scores[i - 3][j + 3]++;
+//       }
+//     }
+//   }
+
+//   addVerticalScores();
+//   addHorizontalScores();
+//   addDiagonalScores();
+//   addAntiDiagonalScores();
+//   return scores;
 // }
 
-function calculateScoresOfBox() {
-  let scores = [
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0],
-  ];
+// const scoreFactors = calculateScoresOfBox();
+
+function estimateScore(game) {
+  const board = game.board;
+
+  let score = 0;
 
   function addVerticalScores() {
-    for (let i = 0; i < scores.length; i++) {
+    for (let i = 0; i < 7; i++) {
       for (let j = 0; j < 3; j++) {
-        scores[i][j]++;
-        scores[i][j + 1]++;
-        scores[i][j + 2]++;
-        scores[i][j + 3]++;
+        if (board[i][j] === null) {
+          continue;
+        }
+        const colP = [
+          board[i][j],
+          board[i][j + 1],
+          board[i][j + 2],
+          board[i][j + 3],
+        ];
+        if (colP.every((e) => e === null || e === colP[0])) {
+          score += board[i][j] === 0 ? 1 : -1;
+        }
       }
     }
   }
 
   function addHorizontalScores() {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 6; j++) {
-        scores[i][j]++;
-        scores[i + 1][j]++;
-        scores[i + 2][j]++;
-        scores[i + 3][j]++;
+    for (let i = 0; i < 6; i++) {
+      const row = [
+        board[0][i],
+        board[1][i],
+        board[2][i],
+        board[3][i],
+        board[4][i],
+        board[5][i],
+        board[6][i],
+      ];
+      if (row.every((e) => e === null)) {
+        continue;
+      }
+      for (let j = 0; j < 4; j++) {
+        const rowP = [
+          board[j][i],
+          board[j + 1][i],
+          board[j + 2][i],
+          board[j + 3][i],
+        ].filter((e) => e !== null);
+
+        if (rowP.length < 1) {
+          continue;
+        }
+        if (rowP.every((e) => e === rowP[0])) {
+          score += rowP[0] === 0 ? 1 : -1;
+        }
       }
     }
   }
@@ -210,10 +271,20 @@ function calculateScoresOfBox() {
   function addDiagonalScores() {
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 3; j++) {
-        scores[i][j]++;
-        scores[i + 1][j + 1]++;
-        scores[i + 2][j + 2]++;
-        scores[i + 3][j + 3]++;
+        const mask = [
+          board[i][j],
+          board[i + 1][j + 1],
+          board[i + 2][j + 2],
+          board[i + 3][j + 3],
+        ].filter((e) => e !== null);
+
+        if (mask.length < 1) {
+          continue;
+        }
+
+        if (mask.every((e) => e === mask[0])) {
+          score += mask[0] === 0 ? 1 : -1;
+        }
       }
     }
   }
@@ -221,10 +292,20 @@ function calculateScoresOfBox() {
   function addAntiDiagonalScores() {
     for (let i = 3; i < 7; i++) {
       for (let j = 0; j < 3; j++) {
-        scores[i][j]++;
-        scores[i - 1][j + 1]++;
-        scores[i - 2][j + 2]++;
-        scores[i - 3][j + 3]++;
+        const mask = [
+          board[i][j],
+          board[i - 1][j - 1],
+          board[i - 2][j - 2],
+          board[i - 3][j - 3],
+        ].filter((e) => e !== null);
+
+        if (mask.length < 1) {
+          continue;
+        }
+
+        if (mask.every((e) => e === mask[0])) {
+          score += mask[0] === 0 ? 1 : -1;
+        }
       }
     }
   }
@@ -233,21 +314,17 @@ function calculateScoresOfBox() {
   addHorizontalScores();
   addDiagonalScores();
   addAntiDiagonalScores();
-  return scores;
-}
+  return score;
 
-const scoreFactors = calculateScoresOfBox();
-
-function estimateScore(game) {
-  const sum = game.board
-    .map((col, colIndex) => {
-      return col.map(
-        (e, i) => (e === 0 ? 1 : e === 1 ? -1 : 0) * scoreFactors[colIndex][i]
-      );
-    })
-    .flat()
-    .reduce((a, b) => a + b);
-  return sum;
+  // const sum = game.board
+  //   .map((col, colIndex) => {
+  //     return col.map(
+  //       (e, i) => (e === 0 ? 1 : e === 1 ? -1 : 0) * scoreFactors[colIndex][i]
+  //     );
+  //   })
+  //   .flat()
+  //   .reduce((a, b) => a + b);
+  // return sum;
 }
 
 // __counter = 0;
