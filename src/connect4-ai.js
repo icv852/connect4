@@ -25,8 +25,21 @@ function min(arr) {
 }
 function availableMoves(game) {
   return game.board
-    .map((col, index) => (col.includes(null) ? index : null))
+    .map((col, index) => {
+      if (!col.includes(null)) {
+        return null;
+      }
+      const newGame = applyMove(game, index);
+      if (winnerOf(newGame) === (game.player === 0 ? -999 : 999)) {
+        return null;
+      }
+      return index;
+    })
     .filter((e) => e !== null);
+
+  // return game.board
+  //   .map((col, index) => (col.includes(null) ? index : null))
+  //   .filter((e) => e !== null);
 }
 export function applyMove(game, move) {
   let newBoard = JSON.parse(JSON.stringify(game.board));
