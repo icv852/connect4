@@ -63,7 +63,7 @@ export function winnerOf(game) {
 
   function horizontalWin() {
     const board = game.board;
-    const midCol = board[3].filter((e) => !e);
+    const midCol = board[3].filter((e) => e !== null);
     if (midCol.length < 1) {
       return false;
     }
@@ -122,7 +122,7 @@ export function winnerOf(game) {
   }
 
   if (verticalWin() || horizontalWin() || diagonalWin() || antiDiagonalWin()) {
-    return game.player === 1 ? 1 : -1;
+    return game.player === 1 ? 999 : -999;
   } else if (boardFull(game)) {
     return 0;
   }
@@ -138,31 +138,116 @@ function isYourTurn(game) {
 export function bestMove(game) {
   const possibleMoves = availableMoves(game)
     .map((move) => applyMove(game, move))
-    .map((game) => minimax(game, 0, 3));
+    .map((game) => minimax(game, 0, 4));
 
-  const bestMoves = availableMoves(game).filter((_, i) => {
-    return possibleMoves[i] === -1;
+  const bestScore = Math.min(...possibleMoves);
+  console.log(bestScore); //FORDEV
+  const bestMove = availableMoves(game).filter((_, i) => {
+    return possibleMoves[i] === bestScore;
   });
-
-  const middleMoves = availableMoves(game).filter((_, i) => {
-    return possibleMoves[i] === 0;
-  });
-
-  const badMoves = availableMoves(game).filter((_, i) => {
-    return possibleMoves[i] === 1;
-  });
-
-  if (bestMoves.length > 0) {
-    return bestMoves;
-  } else if (middleMoves.length > 0) {
-    return middleMoves;
-  } else {
-    return badMoves;
-  }
+  return bestMove;
 }
 
+// export function bestMove(game) {
+//   const possibleMoves = availableMoves(game)
+//     .map((move) => applyMove(game, move))
+//     .map((game) => minimax(game, 0, 3));
+
+//   const bestMoves = availableMoves(game).filter((_, i) => {
+//     return possibleMoves[i] === -1;
+//   });
+
+//   const middleMoves = availableMoves(game).filter((_, i) => {
+//     return possibleMoves[i] === 0;
+//   });
+
+//   const badMoves = availableMoves(game).filter((_, i) => {
+//     return possibleMoves[i] === 1;
+//   });
+
+//   if (bestMoves.length > 0) {
+//     return bestMoves;
+//   } else if (middleMoves.length > 0) {
+//     return middleMoves;
+//   } else {
+//     return badMoves;
+//   }
+// }
+
+function calculateScoresOfBox() {
+  let scores = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+  ];
+
+  function addVerticalScores() {
+    for (let i = 0; i < scores.length; i++) {
+      for (let j = 0; j < 3; j++) {
+        scores[i][j]++;
+        scores[i][j + 1]++;
+        scores[i][j + 2]++;
+        scores[i][j + 3]++;
+      }
+    }
+  }
+
+  function addHorizontalScores() {
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 6; j++) {
+        scores[i][j]++;
+        scores[i + 1][j]++;
+        scores[i + 2][j]++;
+        scores[i + 3][j]++;
+      }
+    }
+  }
+
+  function addDiagonalScores() {
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 3; j++) {
+        scores[i][j]++;
+        scores[i + 1][j + 1]++;
+        scores[i + 2][j + 2]++;
+        scores[i + 3][j + 3]++;
+      }
+    }
+  }
+
+  function addAntiDiagonalScores() {
+    for (let i = 3; i < 7; i++) {
+      for (let j = 0; j < 3; j++) {
+        scores[i][j]++;
+        scores[i - 1][j + 1]++;
+        scores[i - 2][j + 2]++;
+        scores[i - 3][j + 3]++;
+      }
+    }
+  }
+
+  addVerticalScores();
+  addHorizontalScores();
+  addDiagonalScores();
+  addAntiDiagonalScores();
+  return scores;
+}
+
+const scoreFactors = calculateScoresOfBox();
+
 function estimateScore(game) {
-  return 0;
+  const sum = game.board
+    .map((col, colIndex) => {
+      return col.map(
+        (e, i) => (e === 0 ? 1 : e === 1 ? -1 : 0) * scoreFactors[colIndex][i]
+      );
+    })
+    .flat()
+    .reduce((a, b) => a + b);
+  return sum;
 }
 
 // __counter = 0;
@@ -239,134 +324,150 @@ minimax = function (...args) {
 // minimax = trace(minimax)
 
 // const testcases = [
-//   {
-//     name: "Test empty board",
-//     input: {
-//       board: [
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 0,
-//     },
-//     output: null,
-//   },
-//   {
-//     name: "Test vertical win 1",
-//     input: {
-//       board: [
-//         [null, null, null, null, null, null],
-//         [1, null, null, null, null, null],
-//         [1, 0, 0, 0, 0, null],
-//         [1, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: 1,
-//   },
-//   {
-//     name: "Test vertical win 2",
-//     input: {
-//       board: [
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [0, 1, 0, 0, 0, null],
-//         [1, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [1, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: null,
-//   },
-//   {
-//     name: "Test horizontal win 1",
-//     input: {
-//       board: [
-//         [1, null, null, null, null, null],
-//         [0, 1, null, null, null, null],
-//         [0, 1, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: 1,
-//   },
-//   {
-//     name: "Test horizontal win 2",
-//     input: {
-//       board: [
-//         [1, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [1, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [1, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: null,
-//   },
-//   {
-//     name: "Test diagonal win 1",
-//     input: {
-//       board: [
-//         [null, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [1, 0, 0, null, null, null],
-//         [1, 1, 0, null, null, null],
-//         [0, 1, 1, 0, null, null],
-//         [null, null, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: 1,
-//   },
-//   {
-//     name: "Test anti-diagonal win 1",
-//     input: {
-//       board: [
-//         [1, null, null, null, null, null],
-//         [0, null, null, null, null, null],
-//         [1, 1, 0, 0, null, null],
-//         [1, 1, 0, null, null, null],
-//         [1, 0, null, null, null, null],
-//         [0, 0, null, null, null, null],
-//         [null, null, null, null, null, null],
-//       ],
-//       player: 1,
-//     },
-//     output: 1,
-//   },
-//   {
-//     name: "Test draw game",
-//     input: {
-//       board: [
-//         [0, 0, 0, 1, 1, 1],
-//         [1, 1, 1, 0, 0, 0],
-//         [0, 0, 0, 1, 1, 1],
-//         [1, 1, 1, 0, 0, 0],
-//         [0, 0, 0, 1, 1, 1],
-//         [1, 1, 1, 0, 0, 0],
-//         [0, 0, 0, 1, 1, 1],
-//       ],
-//       player: 0,
-//     },
-//     output: 0,
-//   },
+//   // {
+//   //   name: "Test empty board",
+//   //   input: {
+//   //     board: [
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 0,
+//   //   },
+//   //   output: null,
+//   // },
+//   // {
+//   //   name: "Test vertical win 1",
+//   //   input: {
+//   //     board: [
+//   //       [null, null, null, null, null, null],
+//   //       [1, null, null, null, null, null],
+//   //       [1, 0, 0, 0, 0, null],
+//   //       [1, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: 1,
+//   // },
+//   // {
+//   //   name: "Test vertical win 2",
+//   //   input: {
+//   //     board: [
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [0, 1, 0, 0, 0, null],
+//   //       [1, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [1, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: null,
+//   // },
+//   // {
+//   //   name: "Test horizontal win 1",
+//   //   input: {
+//   //     board: [
+//   //       [1, null, null, null, null, null],
+//   //       [0, 1, null, null, null, null],
+//   //       [0, 1, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: 1,
+//   // },
+//   // {
+//   //   name: "Test horizontal win 2",
+//   //   input: {
+//   //     board: [
+//   //       [1, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [1, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [1, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: null,
+//   // },
+//   // {
+//   //   name: "Test diagonal win 1",
+//   //   input: {
+//   //     board: [
+//   //       [null, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [1, 0, 0, null, null, null],
+//   //       [1, 1, 0, null, null, null],
+//   //       [0, 1, 1, 0, null, null],
+//   //       [null, null, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: 1,
+//   // },
+//   // {
+//   //   name: "Test anti-diagonal win 1",
+//   //   input: {
+//   //     board: [
+//   //       [1, null, null, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //       [1, 1, 0, 0, null, null],
+//   //       [1, 1, 0, null, null, null],
+//   //       [1, 0, null, null, null, null],
+//   //       [0, 0, null, null, null, null],
+//   //       [null, null, null, null, null, null],
+//   //     ],
+//   //     player: 1,
+//   //   },
+//   //   output: 1,
+//   // },
+//   // {
+//   //   name: "Test draw game",
+//   //   input: {
+//   //     board: [
+//   //       [0, 0, 0, 1, 1, 1],
+//   //       [1, 1, 1, 0, 0, 0],
+//   //       [0, 0, 0, 1, 1, 1],
+//   //       [1, 1, 1, 0, 0, 0],
+//   //       [0, 0, 0, 1, 1, 1],
+//   //       [1, 1, 1, 0, 0, 0],
+//   //       [0, 0, 0, 1, 1, 1],
+//   //     ],
+//   //     player: 0,
+//   //   },
+//   //   output: 0,
+//   // },
+//   // {
+//   //   name: "Test horizontal win 3",
+//   //   input: {
+//   //     board: [
+//   //       [1, 0, 0, null, null, null],
+//   //       [0, 0, 0, 1, null, null],
+//   //       [0, 1, 0, 1, null, null],
+//   //       [0, 1, 0, 1, 1, 1],
+//   //       [1, 0, 1, 0, 1, null],
+//   //       [0, 1, 1, null, null, null],
+//   //       [0, null, null, null, null, null],
+//   //     ],
+//   //     player: 0,
+//   //   },
+//   //   output: 1,
+//   // },
 // ];
 
 // for (const tc of testcases) {

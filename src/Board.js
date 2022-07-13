@@ -26,6 +26,7 @@ export default function Board() {
     const bestMoves = bestMove(game);
     const randomMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
     setGame(applyMove(game, randomMove));
+    // setGame(applyMove(game, bestMove(game)))
   }
 
   function handleClick(col) {
@@ -55,9 +56,9 @@ export default function Board() {
   }
 
   const winnerMessage =
-    winnerOf(game) === 1
+    winnerOf(game) === 999
       ? "You win!"
-      : winnerOf(game) === -1
+      : winnerOf(game) === -999
       ? "You lose!"
       : winnerOf(game) === 0
       ? "Draw game"
